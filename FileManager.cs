@@ -12,19 +12,23 @@ namespace merge
         private string RootFolder { get; set; }
 
         private static string FileName = string.Format("urban{0}.dat", DateTime.Now.ToString("yyyyMMdd"));
-
+        private int FileCount { get; set; }
         public FileManager(string root)
         {
             var flist = GetFiles(root);
             DeleteIfExists(flist); // delete if a merge file exists in the current folder
+
+            this.FileCount = flist.Count;
             this.RootFolder = root;
-            DataFiles = this.GetDataFiles(root);
-            var count = DataFiles.Count();
+
+            if (FileCount > 0)
+            {
+                DataFiles = this.GetDataFiles(root);
+            }
         }
 
         private void DeleteIfExists(IList<string> flist)
-        {
-            
+        {            
             foreach (var file in flist)
             {
                 if (Path.GetFileName(file) ==  FileManager.FileName)
@@ -32,8 +36,7 @@ namespace merge
                     Console.WriteLine("deleting {0}", file);
                     File.Delete(file);
                 }
-            }
-            
+            }            
         }
 
         private void PrintInvalids(IList<DataElement> invalidlist)
@@ -91,7 +94,7 @@ namespace merge
 
                 foreach (var cxGroup in result)
                 {
-                    Console.WriteLine(string.Format("unique id {0}", cxGroup.Key));
+                    Console.WriteLine(string.Format("uniqueid {0}", cxGroup.Key));
                     List<DataElement> dlist = new List<DataElement>();
 
                     foreach (var cx in cxGroup)
@@ -118,7 +121,7 @@ namespace merge
                 foreach (var d in DataFiles)
                     sb.AppendLine(d.ToString());
 
-                Console.WriteLine("saving merged files...");
+                Console.WriteLine("saving {0} merged files...", FileCount);
                 string path = Path.Combine(this.RootFolder, FileManager.FileName);
                 string content = sb.ToString().TrimEnd().TrimStart();
                 File.WriteAllText(path, content);

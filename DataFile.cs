@@ -8,6 +8,8 @@ namespace merge
 {
     class DataFile
     {
+        public long UniqueID { get; set; }
+
         private IList<DataElement> _sortedElements;
         public IList<DataElement> SortedElements
         {
@@ -20,8 +22,6 @@ namespace merge
 
         public List<DataElement> DataElements { get; set; }
         
-        public long UniqueID { get; set; }
-
         public DataFile(List<DataElement> delements)
         {
             this.DataElements = delements;
@@ -55,40 +55,34 @@ namespace merge
         
         public IList<DataElement> GetSortedDataElements()
         {            
-            List<DataElement> unsorted_full;
-            List<DataElement> sorted_full = new List<DataElement>();
-            List<DataElement> unsorted_all;
-
-            unsorted_all = DataElements;
-
-            // remove all the blank elements from the list
-            unsorted_full = unsorted_all.Where(x => x.IsValid).ToList();
-
+            List<DataElement> unsorted = DataElements.Where(x => x.IsValid).ToList();
+            List<DataElement> sorted = new List<DataElement>();
+     
             // max household id
-            var householdmaxid = unsorted_full.Max(x => x.HouseHoldID);
+            var householdmaxid = unsorted.Max(x => x.HouseHoldID);
 
             // min household id
-            var i = unsorted_full.Min(x => x.HouseHoldID);
+            var i = unsorted.Min(x => x.HouseHoldID);
 
             for (; i <= householdmaxid; i++)
             {
-                var female = unsorted_full.FirstOrDefault(x => x.HouseHoldID == i && x.DataType == _dataType.Female);
-                var male = unsorted_full.FirstOrDefault(x => x.HouseHoldID == i && x.DataType == _dataType.Male);
+                var female = unsorted.FirstOrDefault(x => x.HouseHoldID == i && x.DataType == _dataType.Female);
+                var male = unsorted.FirstOrDefault(x => x.HouseHoldID == i && x.DataType == _dataType.Male);
 
                 if (female != null && male != null)
                 {
-                    sorted_full.Add(female);
-                    sorted_full.Add(male);
+                    sorted.Add(female);
+                    sorted.Add(male);
                 }
 
                 if (female == null)
-                    Console.WriteLine("no female data found for household {0} in unique id {1}", i, this.UniqueID);
+                    Console.WriteLine("no female data found for household {0} in unique id {1}", i, female.UniqueID);
                 
                 else if (male == null)
-                    Console.WriteLine("no male data found for household {0} in unique id {1}", i, this.UniqueID);
+                    Console.WriteLine("no male data found for household {0} in unique id {1}", i, male.UniqueID);
             }
 
-            return sorted_full.ToList();
+            return sorted.ToList();
         }
     }
 }

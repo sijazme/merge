@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Linq;
 
 namespace merge
 {
@@ -12,11 +12,8 @@ namespace merge
     class DataElement
     {
         public string DataString { get; set; }
-
         public string Filename { get; set; }
-
         public _dataType DataType { get; set; }
-        public long ClusterID { get; set; }
         public int HouseHoldID { get; set; }
         public long UniqueID { get; set; }
         public bool IsBlank { get; set; }
@@ -28,11 +25,18 @@ namespace merge
             }
         }
 
-        private static string FemaleStartRegex = @"[J][\s][\d]|[J][\d]";
-        public static string MaleStartRegex = @"[/\^/][\s][\d]|[/\^/][\d]";
+        private string DataRegex
+        {
+            get
+            {
+                return DataType == _dataType.Female ? FemaleDataRegex : MaleDataRegex;
+            }
+        }
 
-        private static string FemaleDataLine = @"[\d]*[A-Z]*[\s][\d][\s][\d]+[\s][\d]";
-        public static string MaleDataLine = @"[a-z][\s][\d][\s][\d]+[\s][\d]";
+        private static string FemaleStartRegex = @"[J][\s]?[\d]";
+        public static string MaleStartRegex = @"[/\^/][\s]?[\d]";
+        private static string FemaleDataRegex = @"([\d]|[A-Z])[\s]?[\d][\s][\d]+[\s][\d]";
+        public static string MaleDataRegex = @"[a-z][\s]?[\d][\s][\d]+[\s][\d]";
 
         public DataElement(string datastr)
         {
@@ -40,19 +44,13 @@ namespace merge
             {
                 DataString = datastr;
                 DataType = GetDataType(datastr);
-                HouseHoldID = GetHouseholdId_(datastr);
+                HouseHoldID = GetHouseholdID(datastr);
                 IsBlank = IsDataEmpty(datastr);
                 UniqueID = GetUniqueID(datastr);
+                IsValid = UniqueID > 0;
             }
-
-            IsValid = Validate();
         }
-
-        private bool Validate()
-        {
-            return UniqueID > 0;
-        }
-
+        
         private bool IsDataEmpty(string datastr)
         {
             int blankcount = 0;
@@ -62,8 +60,7 @@ namespace merge
                 string line;
                 while ((line = reader1.ReadLine()) != null)
                 {
-                    string regex = DataType == _dataType.Female ? FemaleDataLine : MaleDataLine;
-                    if (Regex.Match(line, regex).Success)
+                     if (Regex.Match(line, DataRegex).Success)
                     {
                         var tokens = line.Split(new char[0], StringSplitOptions.RemoveEmptyEntries);
                         if (tokens.Length < 5)
@@ -118,7 +115,7 @@ namespace merge
             return uniqueId;
         }
         
-        private int GetHouseholdId_(string datastr)
+        private int GetHouseholdID(string datastr)
         {
             int householdId = -1;
             var tokens = new List<string>();
@@ -227,19 +224,14 @@ namespace merge
                     {
                         appendLines.AppendLine(line);
                         while ((line = reader2.ReadLine()) != null && !Regex.Match(line, FemaleStartRegex).Success)
-                        {
                             appendLines.AppendLine(line);
-                        }
-
                         elist.Add(new DataElement(appendLines.ToString()));
                         appendLines = new StringBuilder();
                     }
                 }
-
             }
 
             return elist;
         }
-
     }
 }
